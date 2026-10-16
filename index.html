@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pink or Blue?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+  /* ============================================================
+     REVEAL: type "boy" into cell B1 of the "Settings" tab of the
+     Google Sheet. The answer never lives in this page, so peeking
+     at the source spoils nothing.
+     ============================================================ */
+  :root {
+    --ground: #FFF7F4;
+    --paper: #FFFFFF;
+    --ink: #4B3A4A;
+    --ink-soft: #7D6A7B;
+    --pink: #F6C4D3;
+    --pink-50: #FDECF1;
+    --pink-deep: #D35F87;
+    --blue: #BCDCF3;
+    --blue-50: #EAF4FC;
+    --blue-deep: #3F86C0;
+    --line: #F0DEE2;
+    --display: "Caprasimo", "Cooper Black", Georgia, serif;
+    --body: "Nunito", ui-rounded, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    background-image:
+      radial-gradient(circle at 8% 12%, var(--pink-50) 0 120px, transparent 121px),
+      radial-gradient(circle at 94% 30%, var(--blue-50) 0 160px, transparent 161px),
+      radial-gradient(circle at 12% 78%, var(--blue-50) 0 110px, transparent 111px),
+      radial-gradient(circle at 90% 92%, var(--pink-50) 0 140px, transparent 141px);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.6;
+    padding-inline: 16px;
+    padding-block: 32px 64px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 56px; }
+  h1, h2, .display { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  .eyebrow { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--blue-deep); outline-offset: 3px; border-radius: 12px; }
+
+  /* ---------- hero ---------- */
+  .hero { text-align: center; display: grid; gap: 14px; justify-items: center; padding-top: 8px; }
+  .hero h1 { font-size: clamp(48px, 11vw, 92px); line-height: .95; }
+  .hero h1 .p { color: var(--pink-deep); }
+  .hero h1 .b { color: var(--blue-deep); }
+  .hero h1 .or { font-family: var(--body); font-weight: 700; font-size: .32em; color: var(--ink-soft); vertical-align: middle; margin: 0 .2em; }
+  .hero p { margin: 0; max-width: 32em; color: var(--ink-soft); font-size: 18px; }
+  .countdown { display: inline-flex; gap: 10px; margin-top: 6px; }
+  .cd { background: var(--paper); border: 2px solid var(--line); border-radius: 16px; padding: 8px 14px; min-width: 70px; text-align: center; }
+  .cd b { display: block; font-family: var(--display); font-weight: 400; font-size: 28px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .cd span { font-size: 12px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; }
+
+  /* ---------- clues ---------- */
+  .section-head { display: grid; gap: 4px; margin-bottom: 18px; }
+  .section-head h2 { font-size: clamp(30px, 6vw, 40px); }
+  .section-head p { margin: 0; color: var(--ink-soft); }
+  .clues { display: grid; gap: 14px; }
+  .clue {
+    width: 100%; text-align: left; border: 2px dashed #E4C9D1; background: var(--paper);
+    border-radius: 22px; padding: 18px 20px; color: var(--ink);
+    display: grid; grid-template-columns: 56px 1fr; gap: 16px; align-items: start;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  }
+  .clue:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -12px rgba(75,58,74,.35); }
+  .clue.open { border-style: solid; cursor: default; }
+  .clue.open.lean-girl { border-color: var(--pink); background: linear-gradient(0deg, var(--pink-50), var(--paper) 70%); }
+  .clue.open.lean-boy { border-color: var(--blue); background: linear-gradient(0deg, var(--blue-50), var(--paper) 70%); }
+  .clue .ico { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: #FBEFE9; }
+  .clue .ico svg { width: 30px; height: 30px; }
+  .clue h3 { margin: 0 0 2px; font-size: 19px; font-weight: 800; }
+  .clue .tap { font-size: 14px; font-weight: 700; color: var(--pink-deep); }
+  .clue .body { display: none; }
+  .clue.open .tap { display: none; }
+  .clue.open .body { display: grid; gap: 10px; animation: rise .35s ease; }
+  .clue .body p { margin: 0; }
+  .folk { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; border-radius: 999px; padding: 6px 12px; width: fit-content; }
+  .folk.girl { background: var(--pink-50); color: #A8416A; }
+  .folk.boy { background: var(--blue-50); color: #2F6A99; }
+  @keyframes rise { from { opacity: .2; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- tilt meter ---------- */
+  .meter { margin-top: 22px; background: var(--paper); border-radius: 22px; padding: 18px 20px; border: 2px solid var(--line); display: grid; gap: 10px; }
+  .meter-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .meter-top strong { font-size: 15px; }
+  .meter-top span { font-size: 14px; color: var(--ink-soft); }
+  .track { position: relative; height: 18px; border-radius: 999px; background: linear-gradient(90deg, var(--pink) 0%, #EDE3F0 50%, var(--blue) 100%); }
+  .knob { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; border-radius: 50%; background: var(--paper); border: 3px solid var(--ink); transform: translate(-50%, -50%); transition: left .7s cubic-bezier(.34,1.56,.64,1); }
+  .track-labels { display: flex; justify-content: space-between; font-size: 13px; font-weight: 800; }
+  .track-labels .g { color: var(--pink-deep); } .track-labels .b { color: var(--blue-deep); }
+
+  /* ---------- guess ---------- */
+  .guess-card { background: var(--paper); border-radius: 28px; padding: 28px 24px; border: 2px solid var(--line); display: grid; gap: 18px; }
+  label.lbl { font-weight: 800; font-size: 15px; display: block; margin-bottom: 6px; }
+  input[type=text], textarea {
+    width: 100%; font: inherit; color: var(--ink); background: var(--ground);
+    border: 2px solid var(--line); border-radius: 14px; padding: 12px 14px;
+  }
+  textarea { min-height: 76px; resize: vertical; }
+  input:focus, textarea:focus { outline: none; border-color: var(--blue-deep); }
+  .picks { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pick {
+    border: 3px solid transparent; border-radius: 22px; padding: 18px 10px; display: grid; justify-items: center; gap: 4px;
+    font-family: var(--display); font-size: 30px; color: var(--ink); transition: transform .15s ease, border-color .15s ease;
+  }
+  .pick small { font-family: var(--body); font-size: 14px; font-weight: 700; color: var(--ink-soft); }
+  .pick.girl { background: var(--pink-50); }
+  .pick.boy { background: var(--blue-50); }
+  .pick:hover { transform: scale(1.02); }
+  .pick[aria-pressed=true].girl { border-color: var(--pink-deep); background: var(--pink); }
+  .pick[aria-pressed=true].boy { border-color: var(--blue-deep); background: var(--blue); }
+  .submit {
+    border: 0; border-radius: 999px; padding: 15px 22px; font-weight: 800; font-size: 17px; color: #fff;
+    background: linear-gradient(90deg, var(--pink-deep), var(--blue-deep)); justify-self: start;
+  }
+  .submit:disabled { opacity: .45; cursor: not-allowed; }
+  .err { color: #B3405F; font-weight: 700; font-size: 14px; margin: 0; }
+
+  .ticket { border-radius: 24px; padding: 24px; display: grid; gap: 12px; text-align: center; justify-items: center; }
+  .ticket.girl { background: var(--pink-50); border: 2px solid var(--pink); }
+  .ticket.boy { background: var(--blue-50); border: 2px solid var(--blue); }
+  .ticket .display { font-size: 34px; }
+  .ticket p { margin: 0; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .ghost { background: var(--paper); border: 2px solid var(--line); color: var(--ink); border-radius: 999px; padding: 10px 18px; font-weight: 700; font-size: 15px; }
+  .copy-fallback { width: 100%; font-size: 14px; }
+  /* ---------- guess sky ---------- */
+  .wall { background: var(--paper); border: 2px solid var(--line); border-radius: 28px; padding: 22px 20px; display: grid; gap: 16px; }
+  .tally { display: flex; justify-content: space-between; align-items: end; gap: 12px; }
+  .tally > div { display: grid; line-height: 1.2; }
+  .tally .b-side { text-align: right; }
+  .tally b { font-family: var(--display); font-weight: 400; font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .tally span { font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  .tally .g-side { color: var(--pink-deep); }
+  .tally .b-side { color: var(--blue-deep); }
+  .tally .vs { font-size: 14px; font-weight: 700; color: var(--ink-soft); align-self: center; text-align: center; }
+  .tug { display: flex; height: 20px; border-radius: 999px; overflow: hidden; background: #EDE3F0; }
+  .tug-g { width: 50%; background: linear-gradient(90deg, var(--pink-deep), #E88AAA); transition: width .8s cubic-bezier(.34,1.3,.64,1); }
+  .tug-b { flex: 1; background: linear-gradient(90deg, #7FB3DE, var(--blue-deep)); }
+  .sky { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .sky-side { min-height: 190px; border-radius: 20px; padding: 14px 8px 12px; display: flex; flex-wrap: wrap; gap: 14px 6px; align-content: flex-start; justify-content: center; }
+  .sky-side.girl { background: linear-gradient(180deg, var(--pink-50), #FFF9FB); }
+  .sky-side.boy { background: linear-gradient(180deg, var(--blue-50), #F8FCFF); }
+  .sky-empty { align-self: center; margin: auto; font-size: 14px; color: var(--ink-soft); text-align: center; max-width: 14em; }
+  .gb { border: 0; background: none; padding: 0; width: 70px; display: grid; justify-items: center; color: var(--ink); animation: bob 3.4s ease-in-out var(--d, 0s) infinite; }
+  .gb.new { animation: floatin .9s cubic-bezier(.2,.8,.3,1.15) var(--d, 0s) both, bob 3.4s ease-in-out calc(var(--d, 0s) + .9s) infinite; }
+  .gb-bulb {
+    width: 48px; height: 58px; border-radius: 50% 50% 46% 46% / 56% 56% 44% 44%;
+    display: grid; place-items: center; font-weight: 800; font-size: 15px; color: var(--ink);
+    box-shadow: inset -6px -8px 0 rgba(75,58,74,.07); transition: transform .15s ease;
+  }
+  .gb.girl .gb-bulb { background: radial-gradient(circle at 32% 26%, rgba(255,255,255,.85) 0 7%, transparent 8%), #F2A7C0; }
+  .gb.boy .gb-bulb { background: radial-gradient(circle at 32% 26%, rgba(255,255,255,.85) 0 7%, transparent 8%), #9CC8EA; }
+  .gb:hover .gb-bulb { transform: scale(1.08); }
+  .gb.you .gb-bulb { outline: 3px solid var(--ink); outline-offset: 2px; }
+  .gb-string { width: 1.5px; height: 14px; background: var(--ink-soft); opacity: .6; }
+  .gb-name { font-size: 13px; font-weight: 700; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gb[aria-pressed=true] .gb-name { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+  .quote { border-radius: 18px; padding: 14px 18px; display: grid; gap: 2px; text-align: center; }
+  .quote.girl { background: var(--pink-50); }
+  .quote.boy { background: var(--blue-50); }
+  .quote strong { font-size: 15px; }
+  .quote p { margin: 0; font-size: 17px; }
+  .quote .none { color: var(--ink-soft); font-style: italic; }
+  @keyframes floatin { from { transform: translateY(70px) scale(.5); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* ---------- reveal ---------- */
+  .reveal { text-align: center; display: grid; gap: 14px; justify-items: center; }
+  .balloon {
+    width: 190px; height: 230px; border: 0; background: none; padding: 0; position: relative;
+    animation: bob 3.2s ease-in-out infinite;
+  }
+  .balloon .bulb {
+    position: absolute; inset: 0 0 30px 0; border-radius: 50% 50% 48% 48% / 56% 56% 44% 44%;
+    background: radial-gradient(circle at 35% 30%, #fff 0 8%, transparent 9%), linear-gradient(135deg, var(--pink) 0%, #E6D5EE 50%, var(--blue) 100%);
+    display: grid; place-items: center; box-shadow: inset -10px -14px 0 rgba(75,58,74,.06);
+  }
+  .balloon .q { font-family: var(--display); font-size: 70px; color: #fff; text-shadow: 0 2px 0 rgba(75,58,74,.15); }
+  .balloon .knot { position: absolute; left: 50%; bottom: 22px; width: 14px; height: 12px; background: #E3CBE3; transform: translateX(-50%); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .balloon .string { position: absolute; left: 50%; bottom: 0; width: 2px; height: 24px; background: var(--ink-soft); }
+  .balloon:disabled { cursor: default; }
+  .balloon.popped { animation: pop .35s ease forwards; }
+  @keyframes bob { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+  @keyframes pop { to { transform: scale(1.5); opacity: 0; } }
+  .reveal .hint-line { color: var(--ink-soft); margin: 0; }
+  .big-news { display: grid; gap: 10px; justify-items: center; animation: rise .6s ease; }
+  .big-news .display { font-size: clamp(56px, 14vw, 110px); line-height: 1; }
+  .big-news.boy .display { color: var(--blue-deep); }
+  .big-news.girl .display { color: var(--pink-deep); }
+  .big-news p { margin: 0; font-size: 19px; max-width: 30em; }
+
+  footer { text-align: center; color: var(--ink-soft); font-size: 14px; }
+
+  canvas#confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+
+  @media (max-width: 480px) {
+    .clue { grid-template-columns: 44px 1fr; gap: 12px; padding: 16px; }
+    .clue .ico { width: 44px; height: 44px; }
+    .pick { font-size: 24px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<main class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Baby #2 is on the way</div>
+    <h1><span class="p">Pink</span><span class="or">or</span><span class="b">Blue?</span></h1>
+    <p>We know. You don't (yet). Open the clues, trust your gut, and lock in your guess before the big reveal.</p>
+    <div class="countdown" id="countdown" aria-live="polite">
+      <div class="cd"><b id="cd-d">–</b><span>days</span></div>
+      <div class="cd"><b id="cd-h">–</b><span>hours</span></div>
+      <div class="cd"><b id="cd-m">–</b><span>mins</span></div>
+    </div>
+  </header>
+
+  <section aria-labelledby="clues-h">
+    <div class="section-head">
+      <div class="eyebrow">Tap each clue to open it</div>
+      <h2 id="clues-h">The evidence so far</h2>
+      <p>Old wives' tales, a very confident big sister, and a husband who disagrees.</p>
+    </div>
+
+    <div class="clues" id="clues"></div>
+
+    <div class="meter" aria-live="polite">
+      <div class="meter-top">
+        <strong>Old wives' tale meter</strong>
+        <span id="meter-note">Open a clue to move the needle</span>
+      </div>
+      <div class="track"><div class="knob" id="knob"></div></div>
+      <div class="track-labels"><span class="g">Girl</span><span class="b">Boy</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="guess-h">
+    <div class="section-head">
+      <div class="eyebrow">Your turn</div>
+      <h2 id="guess-h">Make your guess</h2>
+    </div>
+
+    <form class="guess-card" id="guess-form" novalidate>
+      <div>
+        <label class="lbl" for="guess-name">Your name</label>
+        <input type="text" id="guess-name" autocomplete="given-name" placeholder="e.g. Auntie May" maxlength="40">
+      </div>
+      <div>
+        <span class="lbl" id="pick-lbl">I think it's a…</span>
+        <div class="picks" role="group" aria-labelledby="pick-lbl">
+          <button type="button" class="pick girl" data-pick="girl" aria-pressed="false">Girl<small>Team Pink</small></button>
+          <button type="button" class="pick boy" data-pick="boy" aria-pressed="false">Boy<small>Team Blue</small></button>
+        </div>
+      </div>
+      <div>
+        <label class="lbl" for="guess-why">Why? <span style="font-weight:600;color:var(--ink-soft)">(optional)</span></label>
+        <textarea id="guess-why" maxlength="200" placeholder="The skin glow doesn't lie…"></textarea>
+      </div>
+      <p class="err" id="guess-err" hidden></p>
+      <button class="submit" type="submit" id="guess-submit">Lock in my guess</button>
+    </form>
+
+    <div class="ticket" id="ticket" hidden>
+      <div class="eyebrow">Your guess is locked in</div>
+      <div class="display" id="ticket-title"></div>
+      <p id="ticket-why"></p>
+      <p style="color:var(--ink-soft);font-size:15px" id="ticket-note"></p>
+      <div class="row">
+        <button type="button" class="ghost" id="copy-btn">Copy my guess</button>
+        <button type="button" class="ghost" id="change-btn">Change my guess</button>
+      </div>
+      <textarea class="copy-fallback" id="copy-fallback" readonly hidden></textarea>
+    </div>
+
+  </section>
+
+  <section aria-labelledby="wall-h">
+    <div class="section-head">
+      <div class="eyebrow" id="wall-count">No guesses yet</div>
+      <h2 id="wall-h">The guess sky</h2>
+      <p>Every guess floats up as a balloon. Tap one to see their reasoning.</p>
+    </div>
+    <div class="wall">
+      <div class="tally" aria-live="polite">
+        <div class="g-side"><b id="n-girl">0</b><span>Team Pink</span></div>
+        <div class="vs" id="tally-lead">Who's winning?</div>
+        <div class="b-side"><b id="n-boy">0</b><span>Team Blue</span></div>
+      </div>
+      <div class="tug" aria-hidden="true"><div class="tug-g" id="tug-g"></div><div class="tug-b"></div></div>
+      <div class="sky">
+        <div class="sky-side girl" id="sky-girl"></div>
+        <div class="sky-side boy" id="sky-boy"></div>
+      </div>
+      <div class="quote" id="quote" hidden aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="reveal" aria-labelledby="reveal-h">
+    <div class="eyebrow" id="reveal-eyebrow">The big reveal</div>
+    <h2 id="reveal-h" style="font-size:clamp(30px,6vw,40px)">Pop the balloon</h2>
+    <button class="balloon" id="balloon" type="button" aria-label="Pop the balloon">
+      <span class="bulb"><span class="q">?</span></span>
+      <span class="knot"></span><span class="string"></span>
+    </button>
+    <p class="hint-line" id="reveal-line"></p>
+    <div class="big-news" id="big-news" hidden aria-live="assertive"></div>
+  </section>
+
+  <footer>Made with love (and a lot of saltine crackers).</footer>
+</main>
+
+<script>
+(function () {
+  const REVEAL_DATE = "2026-10-18T18:00:00";   // local time the countdown targets
+
+  // Paste your Apps Script web app URL (the one ending in /exec) between the
+  // quotes. Guesses then go to the Google Sheet and the reveal comes from its
+  // Settings tab. Left empty, the page still works but keeps guesses in this
+  // browser only.
+  const ENDPOINT = "";
+  const LIVE = /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(ENDPOINT);
+  let REVEAL = null;
+
+  // text/plain keeps the POST a "simple" request, so Apps Script needs no CORS preflight.
+  function server(fn, arg) {
+    const req = fn === "submitGuess"
+      ? fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(arg) })
+      : fetch(ENDPOINT + "?action=state&visitor=" + encodeURIComponent(arg || ""));
+    return req.then(r => r.json()).then(res => {
+      if (!res.ok) throw new Error(res.error || "Request failed");
+      return res.state;
+    });
+  }
+
+  const ICONS = {
+    nausea: '<svg viewBox="0 0 32 32" fill="none" stroke="#4B3A4A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="12" fill="#D8EFC9"/><path d="M11 13h.01M21 13h.01"/><path d="M11 21c2-2 8-2 10 0"/><path d="M7 9c1-1 2.5-1 3.5 0M21.5 9c1-1 2.5-1 3.5 0"/></svg>',
+    sister: '<svg viewBox="0 0 32 32" fill="none" stroke="#4B3A4A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="14" r="8" fill="#FBE3D2"/><path d="M8 12c2-5 14-5 16 0"/><path d="M13 14h.01M19 14h.01"/><path d="M13.5 17.5c1.5 1.2 3.5 1.2 5 0"/><path d="M10 26c2-3 10-3 12 0"/><circle cx="7" cy="10" r="2.5" fill="#F6C4D3"/><circle cx="25" cy="10" r="2.5" fill="#F6C4D3"/></svg>',
+    skin: '<svg viewBox="0 0 32 32" fill="none" stroke="#4B3A4A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4l2.6 6.4L25 13l-6.4 2.6L16 22l-2.6-6.4L7 13l6.4-2.6z" fill="#FFE7A3"/><path d="M24 21l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z" fill="#BCDCF3"/></svg>'
+  };
+
+  const CLUES = [
+    {
+      id: "nausea", title: "The first-trimester nausea",
+      body: "Way worse than my first pregnancy. I lost 7 lbs!",
+      lean: "girl", folk: "Folklore says: rough morning sickness means a girl"
+    },
+    {
+      id: "sister", title: "Jennie's official prediction",
+      body: "Jennie's first guess was a boy. Then she changed her mind, and now she insists it's a girl.",
+      lean: "girl", folk: "Jennie says: girl (her final answer)"
+    },
+    {
+      id: "skin", title: "The mysterious glow",
+      body: "Some people say my skin looks nicer than usual. I honestly can't tell myself.",
+      lean: "boy", folk: "Folklore says: glowing skin means a boy"
+    }
+  ];
+
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+    del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // One id per browser, so changing a guess updates the same sheet row.
+  let visitorId = store.get("pob-visitor");
+  if (!visitorId) {
+    visitorId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+      : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
+    store.set("pob-visitor", visitorId);
+  }
+
+  /* ---------- clues + meter ---------- */
+  const opened = new Set(store.get("pob-opened") || []);
+  const cluesEl = $("clues");
+  CLUES.forEach((c, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "clue";
+    b.dataset.id = c.id;
+    b.setAttribute("aria-expanded", "false");
+    b.innerHTML =
+      '<span class="ico">' + ICONS[c.id] + '</span>' +
+      '<span><h3>Clue ' + (i + 1) + ': ' + esc(c.title) + '</h3>' +
+      '<span class="tap">Tap to open</span>' +
+      '<span class="body"><p>' + esc(c.body) + '</p>' +
+      '<span class="folk ' + c.lean + '">' + (c.lean === "girl" ? "♥" : "★") + ' ' + esc(c.folk) + '</span></span></span>';
+    b.addEventListener("click", () => openClue(b, c, true));
+    cluesEl.appendChild(b);
+    if (opened.has(c.id)) openClue(b, c, false);
+  });
+
+  function openClue(el, c, save) {
+    if (el.classList.contains("open")) return;
+    el.classList.add("open", "lean-" + c.lean);
+    el.setAttribute("aria-expanded", "true");
+    opened.add(c.id);
+    if (save) store.set("pob-opened", [...opened]);
+    updateMeter();
+  }
+
+  function updateMeter() {
+    const open = CLUES.filter(c => opened.has(c.id));
+    const score = open.reduce((s, c) => s + (c.lean === "boy" ? 1 : -1), 0);
+    const pct = 50 + (score / CLUES.length) * 40;
+    $("knob").style.left = pct + "%";
+    const note = $("meter-note");
+    if (!open.length) note.textContent = "Open a clue to move the needle";
+    else if (open.length < CLUES.length) note.textContent = open.length + " of " + CLUES.length + " clues opened";
+    else note.textContent = score < 0 ? "The tales lean pink. But are they right?" : score > 0 ? "The tales lean blue. But are they right?" : "Dead even!";
+  }
+  updateMeter();
+
+  /* ---------- shared state from the sheet ---------- */
+  function applyState(s) {
+    if (!s) return;
+    REVEAL = s.reveal === "boy" || s.reveal === "girl" ? s.reveal : null;
+    renderWall(s.guesses || []);
+    tick();
+    renderReveal();
+  }
+  function refresh() { if (LIVE) server("getState", visitorId).then(applyState, () => {}); }
+  refresh();
+  setInterval(refresh, 30000);
+
+  /* ---------- guess sky ---------- */
+  const seen = new Set();
+  let wallSig = null, selectedKey = null, wallList = [];
+  const gkey = (g) => g.name + "|" + g.at;
+  const initials = (n) => n.trim().split(/\s+/).slice(0, 2).map(w => Array.from(w)[0] || "").join("").toUpperCase();
+
+  function renderWall(list) {
+    const sig = JSON.stringify(list);
+    if (sig === wallSig) return;
+    wallSig = sig;
+    wallList = list;
+    const girls = list.filter(g => g.guess === "girl");
+    const boys = list.filter(g => g.guess === "boy");
+    const total = list.length;
+    $("n-girl").textContent = girls.length;
+    $("n-boy").textContent = boys.length;
+    $("tug-g").style.width = (total ? girls.length / total * 100 : 50) + "%";
+    $("wall-count").textContent = total ? total + (total === 1 ? " guess" : " guesses") + " so far" : "No guesses yet";
+    $("tally-lead").textContent = !total ? "Who's winning?"
+      : girls.length === boys.length ? "Neck and neck!"
+      : (girls.length > boys.length ? "Pink" : "Blue") + " is ahead";
+    fillSide($("sky-girl"), girls, "No pink balloons yet. Be the first!");
+    fillSide($("sky-boy"), boys, "No blue balloons yet. Be the first!");
+    list.forEach(g => seen.add(gkey(g)));
+    if (!list.some(g => gkey(g) === selectedKey)) {
+      const latest = list.slice().sort((a, b) => b.at - a.at)[0];
+      selectedKey = latest ? gkey(latest) : null;
+    }
+    showQuote();
+  }
+
+  function fillSide(el, arr, emptyText) {
+    el.innerHTML = "";
+    if (!arr.length) {
+      const p = document.createElement("p");
+      p.className = "sky-empty";
+      p.textContent = emptyText;
+      el.appendChild(p);
+      return;
+    }
+    let fresh = 0;
+    arr.forEach((g, i) => {
+      const k = gkey(g);
+      const isNew = !seen.has(k);
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "gb " + g.guess + (g.you ? " you" : "") + (isNew ? " new" : "");
+      b.style.setProperty("--d", (isNew ? (fresh++ % 8) * 0.12 : (i % 5) * 0.45) + "s");
+      b.dataset.key = k;
+      b.innerHTML = '<span class="gb-bulb">' + esc(initials(g.name)) + '</span><span class="gb-string"></span>' +
+        '<span class="gb-name">' + esc(g.you ? "You" : g.name) + '</span>';
+      b.setAttribute("aria-label", g.name + " guessed " + g.guess + (g.reason ? ": " + g.reason : ""));
+      b.addEventListener("click", () => { selectedKey = k; showQuote(); });
+      el.appendChild(b);
+    });
+  }
+
+  function showQuote() {
+    document.querySelectorAll(".gb").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.key === selectedKey)));
+    const q = $("quote");
+    const g = wallList.find(x => gkey(x) === selectedKey);
+    if (!g) { q.hidden = true; return; }
+    q.className = "quote " + g.guess;
+    q.innerHTML = '<strong>' + esc(g.you ? "You (" + g.name + ")" : g.name) + ' says ' + (g.guess === "boy" ? "Boy" : "Girl") + '</strong>' +
+      (g.reason ? '<p>“' + esc(g.reason) + '”</p>' : '<p class="none">No reason given. Pure gut feeling.</p>');
+    q.hidden = false;
+  }
+
+  // Preview (not served from Apps Script): show just this browser's own guess.
+  function renderLocal() {
+    if (LIVE) return;
+    const g = store.get("pob-guess");
+    renderWall(g ? [{ name: g.name, guess: g.pick, reason: g.why || "", at: g.at, you: true }] : []);
+  }
+
+  /* ---------- guess ---------- */
+  let pick = null;
+  const picks = document.querySelectorAll(".pick");
+  picks.forEach(p => p.addEventListener("click", () => {
+    pick = p.dataset.pick;
+    picks.forEach(o => o.setAttribute("aria-pressed", String(o === p)));
+    $("guess-err").hidden = true;
+  }));
+
+  $("guess-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = $("guess-name").value.trim();
+    const why = $("guess-why").value.trim();
+    const err = $("guess-err");
+    if (!name) { err.textContent = "Add your name so we know who called it."; err.hidden = false; $("guess-name").focus(); return; }
+    if (!pick) { err.textContent = "Pick Girl or Boy to lock in your guess."; err.hidden = false; return; }
+    const g = { name, pick, why, at: Date.now() };
+
+    const done = (state) => {
+      store.set("pob-guess", g);
+      showTicket(g);
+      burst(pick === "boy" ? ["#3F86C0", "#BCDCF3", "#FFFFFF"] : ["#D35F87", "#F6C4D3", "#FFFFFF"]);
+      if (state) applyState(state);
+      renderLocal();
+    };
+    if (!LIVE) { done(null); return; }
+
+    const btn = $("guess-submit");
+    btn.disabled = true;
+    btn.textContent = "Saving your guess…";
+    server("submitGuess", { id: visitorId, name, guess: pick, reason: why })
+      .then(done, () => {
+        err.textContent = "Your guess didn't save. Check your connection and tap the button again.";
+        err.hidden = false;
+      })
+      .then(() => { btn.disabled = false; btn.textContent = "Lock in my guess"; });
+  });
+
+  function guessText(g) {
+    return (g.pick === "boy" ? "💙 My guess: BOY!" : "🩷 My guess: GIRL!") +
+      " — " + g.name + (g.why ? ' ("' + g.why + '")' : "");
+  }
+
+  function showTicket(g) {
+    $("guess-form").hidden = true;
+    const t = $("ticket");
+    t.className = "ticket " + g.pick;
+    t.hidden = false;
+    $("ticket-title").textContent = g.name + " says " + (g.pick === "boy" ? "Boy!" : "Girl!");
+    $("ticket-why").textContent = g.why ? "“" + g.why + "”" : "";
+    $("ticket-why").hidden = !g.why;
+    $("ticket-note").textContent = LIVE
+      ? "It's on the family scoreboard. Come back on reveal day to see if you called it!"
+      : "Send it to us so it counts on the family scoreboard:";
+    $("copy-btn").hidden = !!LIVE;
+    $("copy-fallback").hidden = true;
+    $("copy-btn").textContent = "Copy my guess";
+    renderReveal();
+  }
+
+  $("copy-btn").addEventListener("click", () => {
+    const g = store.get("pob-guess"); if (!g) return;
+    const txt = guessText(g);
+    const fb = $("copy-fallback");
+    const fallback = () => { fb.value = txt; fb.hidden = false; fb.focus(); fb.select(); $("copy-btn").textContent = "Select & copy the text below"; };
+    try {
+      navigator.clipboard.writeText(txt).then(() => { $("copy-btn").textContent = "Copied! Now text it to us"; }, fallback);
+    } catch (e) { fallback(); }
+  });
+
+  $("change-btn").addEventListener("click", () => {
+    const g = store.get("pob-guess");
+    store.del("pob-guess");
+    $("ticket").hidden = true;
+    $("guess-form").hidden = false;
+    if (g) {
+      $("guess-name").value = g.name;
+      $("guess-why").value = g.why || "";
+    }
+    pick = null;
+    picks.forEach(o => o.setAttribute("aria-pressed", "false"));
+    renderReveal();
+    renderLocal();
+  });
+
+  const saved = store.get("pob-guess");
+  if (saved && saved.name && saved.pick) showTicket(saved);
+  renderLocal();
+
+  /* ---------- countdown ---------- */
+  const target = new Date(REVEAL_DATE).getTime();
+  function tick() {
+    let ms = Math.max(0, target - Date.now());
+    const d = Math.floor(ms / 864e5); ms -= d * 864e5;
+    const h = Math.floor(ms / 36e5); ms -= h * 36e5;
+    const m = Math.floor(ms / 6e4);
+    $("cd-d").textContent = d; $("cd-h").textContent = h; $("cd-m").textContent = m;
+    $("countdown").hidden = !!REVEAL;
+  }
+  tick(); setInterval(tick, 30000);
+
+  /* ---------- reveal ---------- */
+  const balloon = $("balloon");
+  function renderReveal() {
+    if (balloon.classList.contains("popped")) return;
+    const g = store.get("pob-guess");
+    if (!REVEAL) {
+      balloon.disabled = true;
+      balloon.setAttribute("aria-label", "Balloon, not ready to pop yet");
+      const when = new Date(REVEAL_DATE).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+      $("reveal-line").textContent = "This balloon pops on " + when + ". Lock in your guess before then and come back to this page!";
+      return;
+    }
+    balloon.disabled = false;
+    balloon.setAttribute("aria-label", "Pop the balloon");
+    $("reveal-line").textContent = g ? "Ready? Tap the balloon." : "Make your guess first, or just tap the balloon if you can't wait!";
+  }
+  renderReveal();
+
+  balloon.addEventListener("click", () => {
+    if (!REVEAL || balloon.classList.contains("popped")) return;
+    balloon.classList.add("popped");
+    setTimeout(() => { balloon.hidden = true; }, 350);
+    $("reveal-line").hidden = true;
+    $("reveal-h").textContent = "It's official";
+    const g = store.get("pob-guess");
+    const isBoy = REVEAL === "boy";
+    const news = $("big-news");
+    news.className = "big-news " + REVEAL;
+    let verdict = "";
+    if (g) verdict = g.pick === REVEAL
+      ? "You called it, " + esc(g.name) + "! Bragging rights are yours."
+      : "Nice try, " + esc(g.name) + ". The old wives' tales fooled you too!";
+    news.innerHTML =
+      '<div class="display">It’s a ' + (isBoy ? "Boy" : "Girl") + '!</div>' +
+      '<p>' + (isBoy ? "Jennie is getting a little brother. Team Blue wins!" : "Jennie is getting a little sister. Team Pink wins!") + '</p>' +
+      (verdict ? '<p><strong>' + verdict + '</strong></p>' : "");
+    news.hidden = false;
+    const cols = isBoy ? ["#3F86C0", "#BCDCF3", "#8FC1E8", "#FFFFFF"] : ["#D35F87", "#F6C4D3", "#EFA0B8", "#FFFFFF"];
+    burst(cols, 260); setTimeout(() => burst(cols, 180), 700);
+  });
+
+  /* ---------- confetti ---------- */
+  const cv = $("confetti"), ctx = cv.getContext("2d");
+  let parts = [], raf = null;
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function size() { cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; }
+  size(); addEventListener("resize", size);
+  function burst(colors, n) {
+    if (reduce) return;
+    n = n || 120;
+    const W = cv.width, H = cv.height, dpr = devicePixelRatio;
+    for (let i = 0; i < n; i++) {
+      parts.push({
+        x: W / 2 + (Math.random() - .5) * W * .3, y: H * .45,
+        vx: (Math.random() - .5) * 18 * dpr, vy: (-Math.random() * 16 - 6) * dpr,
+        s: (5 + Math.random() * 7) * dpr, r: Math.random() * 6, vr: (Math.random() - .5) * .3,
+        c: colors[i % colors.length], life: 0, round: Math.random() < .35
+      });
+    }
+    if (!raf) raf = requestAnimationFrame(step);
+  }
+  function step() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    const g = .45 * devicePixelRatio;
+    parts = parts.filter(p => p.y < cv.height + 40 && p.life < 400);
+    for (const p of parts) {
+      p.vy += g; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life++;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c;
+      ctx.strokeStyle = "rgba(75,58,74,.15)"; ctx.lineWidth = 1;
+      if (p.round) { ctx.beginPath(); ctx.arc(0, 0, p.s / 2, 0, 7); ctx.fill(); ctx.stroke(); }
+      else { ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.strokeRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); }
+      ctx.restore();
+    }
+    raf = parts.length ? requestAnimationFrame(step) : null;
+  }
+})();
+</script>
+
+</body>
+</html>
