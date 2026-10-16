@@ -61,6 +61,7 @@
   .countdown { display: inline-flex; gap: 10px; margin-top: 6px; }
   .cd { background: var(--paper); border: 2px solid var(--line); border-radius: 16px; padding: 8px 14px; min-width: 70px; text-align: center; }
   .cd b { display: block; font-family: var(--display); font-weight: 400; font-size: 28px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .cd-label { margin-top: -6px; font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
   .cd span { font-size: 12px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; }
 
   /* ---------- clues ---------- */
@@ -228,6 +229,7 @@
       <div class="cd"><b id="cd-h">–</b><span>hours</span></div>
       <div class="cd"><b id="cd-m">–</b><span>mins</span></div>
     </div>
+    <div class="cd-label" id="cd-label">until the gender reveal</div>
   </header>
 
   <section aria-labelledby="clues-h">
@@ -613,6 +615,7 @@
     const m = Math.floor(ms / 6e4);
     $("cd-d").textContent = d; $("cd-h").textContent = h; $("cd-m").textContent = m;
     $("countdown").hidden = !!REVEAL;
+    $("cd-label").hidden = !!REVEAL;
   }
   tick(); setInterval(tick, 30000);
 
@@ -625,7 +628,7 @@
       balloon.disabled = true;
       balloon.setAttribute("aria-label", "Balloon, not ready to pop yet");
       const when = new Date(REVEAL_DATE).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
-      $("reveal-line").textContent = "This balloon pops on " + when + ". Lock in your guess before then and come back to this page!";
+      $("reveal-line").textContent = "This gender reveal balloon pops on " + when + ". Lock in your guess before then and come back to this page!";
       return;
     }
     balloon.disabled = false;
